@@ -27,6 +27,12 @@ pub enum TokenKind {
     Int,
     Assign,
     Plus,
+    Minus,
+    Slash,
+    Asterisk,
+    Bang,
+    Greater,
+    Less,
     Comma,
     Semicolon,
     LParen,
@@ -35,6 +41,11 @@ pub enum TokenKind {
     RBrace,
     Function,
     Let,
+    True,
+    False,
+    If,
+    Else,
+    Return,
 }
 
 impl fmt::Display for TokenKind {
@@ -46,6 +57,12 @@ impl fmt::Display for TokenKind {
             TokenKind::Int => write!(f, "Int"),
             TokenKind::Assign => write!(f, "Assign"),
             TokenKind::Plus => write!(f, "Plus"),
+            TokenKind::Minus => write!(f, "Minus"),
+            TokenKind::Slash => write!(f, "Slash"),
+            TokenKind::Asterisk => write!(f, "Asterisk"),
+            TokenKind::Bang => write!(f, "Bang"),
+            TokenKind::Greater => write!(f, "Greater"),
+            TokenKind::Less => write!(f, "Less"),
             TokenKind::Comma => write!(f, "Comma"),
             TokenKind::Semicolon => write!(f, "Semicolon"),
             TokenKind::LParen => write!(f, "LParen"),
@@ -54,6 +71,11 @@ impl fmt::Display for TokenKind {
             TokenKind::RBrace => write!(f, "RBrace"),
             TokenKind::Function => write!(f, "Function"),
             TokenKind::Let => write!(f, "Let"),
+            TokenKind::True => write!(f, "True"),
+            TokenKind::False => write!(f, "False"),
+            TokenKind::If => write!(f, "If"),
+            TokenKind::Else => write!(f, "Else"),
+            TokenKind::Return => write!(f, "Return"),
         }
     }
 }
@@ -61,6 +83,6 @@ impl fmt::Display for TokenKind {
 #[derive(Debug, PartialEq)]
 pub enum TokenValue {
     None,
-    Number(f64),
+    Number(i64),
     String(String),
 }

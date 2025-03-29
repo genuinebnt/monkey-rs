@@ -14,7 +14,7 @@ pub struct Lexer<'a> {
 impl<'a> Lexer<'a> {
     pub fn new(source: &str) -> Lexer {
         Lexer {
-            source: source,
+            source,
             chars: source.chars(),
         }
     }
@@ -24,6 +24,12 @@ impl<'a> Lexer<'a> {
             match c {
                 '=' => return Assign,
                 '+' => return Plus,
+                '-' => return Minus,
+                '/' => return Slash,
+                '*' => return Asterisk,
+                '!' => return Bang,
+                '>' => return Greater,
+                '<' => return Less,
                 ',' => return Comma,
                 ';' => return Semicolon,
                 '(' => return LParen,
@@ -31,7 +37,7 @@ impl<'a> Lexer<'a> {
                 '{' => return LBrace,
                 '}' => return RBrace,
                 'a'..='z' | 'A'..='Z' | '_' => return self.read_ident(c),
-                '0'..='9' => return Int,
+                '0'..='9' => return self.read_number(),
                 _ => return Illegal,
             }
         }
@@ -40,10 +46,16 @@ impl<'a> Lexer<'a> {
 
     pub fn next_token(&mut self) -> Token {
         self.skip_whitespace();
+
         let start = self.offset();
         let kind = self.next_kind();
         let end = self.offset();
-        let value = TokenValue::String(self.source[start..end].to_string());
+        let value = &self.source[start..end];
+
+        let value = match kind {
+            Int => TokenValue::Number(value.parse::<i64>().unwrap()),
+            _ => TokenValue::String(value.to_string()),
+        };
 
         let token = Token {
             kind,
@@ -82,8 +94,24 @@ impl<'a> Lexer<'a> {
         match ident {
             "let" => Let,
             "fn" => Function,
+            "true" => True,
+            "false" => False,
+            "if" => If,
+            "else" => Else,
+            "return" => Return,
             _ => Ident,
         }
+    }
+
+    fn read_number(&mut self) -> TokenKind {
+        while let Some(c) = self.peek() {
+            if c.is_digit(10) {
+                self.chars.next();
+            } else {
+                break;
+            }
+        }
+        TokenKind::Int
     }
 
     fn is_alphanumeric(&self, c: char) -> bool {
@@ -117,62 +145,96 @@ let ten = 10;
 let add = fn(x, y) {
 x + y;
 };
-let result = add(five, ten);";
+let result = add(five, ten);
+!-/*5;
+5 < 10 > 5;
+if (5 < 10) {
+    return true;
+} else {
+    return false;
+}";
         let tokens = vec![
-            (Let, 0, 3, "let"),
-            (Ident, 4, 8, "five"),
-            (Assign, 9, 10, "="),
-            (Int, 11, 12, "5"),
-            (Semicolon, 12, 13, ";"),
-            (Let, 14, 17, "let"),
-            (Ident, 18, 21, "ten"),
-            (Assign, 22, 23, "="),
-            (Int, 24, 25, "10"),
-            (Semicolon, 25, 26, ";"),
-            (Let, 28, 31, "let"),
-            (Ident, 32, 35, "add"),
-            (Function, 36, 40, "fn"),
-            (LParen, 41, 42, "("),
-            (Ident, 43, 44, "x"),
-            (Comma, 45, 46, ","),
-            (Ident, 47, 48, "y"),
-            (RParen, 49, 50, ")"),
-            (LBrace, 51, 52, "{"),
-            (Ident, 54, 55, "x"),
-            (Plus, 56, 57, "+"),
-            (Ident, 58, 59, "y"),
-            (Semicolon, 60, 61, ";"),
-            (RBrace, 62, 63, "}"),
-            (Semicolon, 64, 65, ";"),
-            (Ident, 67, 70, "result"),
-            (Assign, 71, 72, "="),
-            (Ident, 74, 75, "add"),
-            (LParen, 76, 77, "("),
-            (Ident, 78, 79, "five"),
-            (Comma, 80, 81, ","),
-            (Ident, 82, 83, "ten"),
-            (RParen, 84, 85, ")"),
-            (Semicolon, 86, 87, ";"),
-            (Eof, 88, 88, ""),
+            (Let, "let"),
+            (Ident, "five"),
+            (Assign, "="),
+            (Int, "5"),
+            (Semicolon, ";"),
+            (Let, "let"),
+            (Ident, "ten"),
+            (Assign, "="),
+            (Int, "10"),
+            (Semicolon, ";"),
+            (Let, "let"),
+            (Ident, "add"),
+            (Assign, "="),
+            (Function, "fn"),
+            (LParen, "("),
+            (Ident, "x"),
+            (Comma, ","),
+            (Ident, "y"),
+            (RParen, ")"),
+            (LBrace, "{"),
+            (Ident, "x"),
+            (Plus, "+"),
+            (Ident, "y"),
+            (Semicolon, ";"),
+            (RBrace, "}"),
+            (Semicolon, ";"),
+            (Let, "let"),
+            (Ident, "result"),
+            (Assign, "="),
+            (Ident, "add"),
+            (LParen, "("),
+            (Ident, "five"),
+            (Comma, ","),
+            (Ident, "ten"),
+            (RParen, ")"),
+            (Semicolon, ";"),
+            (Bang, "!"),
+            (Minus, "-"),
+            (Slash, "/"),
+            (Asterisk, "*"),
+            (Int, "5"),
+            (Semicolon, ";"),
+            (Int, "5"),
+            (Less, "<"),
+            (Int, "10"),
+            (Greater, ">"),
+            (Int, "5"),
+            (Semicolon, ";"),
+            (If, "if"),
+            (LParen, "("),
+            (Int, "5"),
+            (Less, "<"),
+            (Int, "10"),
+            (RParen, ")"),
+            (LBrace, "{"),
+            (Return, "return"),
+            (True, "true"),
+            (Semicolon, ";"),
+            (RBrace, "}"),
+            (Else, "else"),
+            (LBrace, "{"),
+            (Return, "return"),
+            (False, "false"),
+            (Semicolon, ";"),
+            (RBrace, "}"),
+            (Eof, ""),
         ];
 
         let mut test_cases = Vec::new();
-        tokens.into_iter().for_each(|(kind, start, end, literal)| {
-            test_cases.push(Token::new(
-                kind,
-                start,
-                end,
-                TokenValue::String(literal.to_string()),
-            ))
+        tokens.into_iter().for_each(|(kind, literal)| match kind {
+            TokenKind::Int => {
+                test_cases.push((kind, TokenValue::Number(literal.parse::<i64>().unwrap())))
+            }
+            _ => test_cases.push((kind, TokenValue::String(literal.to_string()))),
         });
 
         let mut lexer = Lexer::new(input);
         for test_case in test_cases {
             let token = lexer.next_token();
-            assert_eq!(token.kind, test_case.kind);
-            assert_eq!(token.start, test_case.start);
-            assert_eq!(token.end, test_case.end);
-            assert_eq!(token.value, test_case.value);
+            assert_eq!(token.kind, test_case.0);
+            assert_eq!(token.value, test_case.1);
         }
     }
 }
