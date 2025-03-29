@@ -22,12 +22,12 @@ impl<'a> Lexer<'a> {
     fn next_kind(&mut self) -> TokenKind {
         while let Some(c) = self.chars.next() {
             match c {
-                '=' => return Assign,
+                '=' => return self.match_value_or(Equal, Assign, '='),
                 '+' => return Plus,
                 '-' => return Minus,
                 '/' => return Slash,
                 '*' => return Asterisk,
-                '!' => return Bang,
+                '!' => return self.match_value_or(NotEqual, Bang, '='),
                 '>' => return Greater,
                 '<' => return Less,
                 ',' => return Comma,
@@ -103,6 +103,18 @@ impl<'a> Lexer<'a> {
         }
     }
 
+    fn match_value_or(&mut self, want: TokenKind, not: TokenKind, value: char) -> TokenKind {
+        if let Some(c) = self.peek() {
+            if c == value {
+                self.chars.next();
+                return want;
+            } else {
+                return not;
+            }
+        }
+        not
+    }
+
     fn read_number(&mut self) -> TokenKind {
         while let Some(c) = self.peek() {
             if c.is_digit(10) {
@@ -152,7 +164,9 @@ if (5 < 10) {
     return true;
 } else {
     return false;
-}";
+}
+10 == 10;
+9 != 10;";
         let tokens = vec![
             (Let, "let"),
             (Ident, "five"),
@@ -219,6 +233,14 @@ if (5 < 10) {
             (False, "false"),
             (Semicolon, ";"),
             (RBrace, "}"),
+            (Int, "10"),
+            (Equal, "=="),
+            (Int, "10"),
+            (Semicolon, ";"),
+            (Int, "9"),
+            (NotEqual, "!="),
+            (Int, "10"),
+            (Semicolon, ";"),
             (Eof, ""),
         ];
 
